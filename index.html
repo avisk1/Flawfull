@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <!-- <meta charset = "UTF-8"> -->
+      <meta http-equiv="Content-Security-Policy" content="script-src 'self'">
+      <!-- <meta http-equiv="Content-Security-Policy" content="script-src 'self' http://xxxx 'unsafe-inline' 'unsafe-eval';"> -->
+      <!-- <meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'self' http://* 'unsafe-inline'; script-src 'self' http://* 'unsafe-inline' 'unsafe-eval'" /> -->
+      <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' data gap https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src ;script-src 'self' http://onlineerp.solution.quebec 'unsafe-inline' 'unsafe-eval';"> -->
+
+      <link rel="stylesheet" type="text/css" href="style.css"/>
+   </head>
+
+   <body>
+
+     <!-- <script id="sound-script" src="https://www.youtube.com/iframe_api"></script> -->
+
+     <div class="loading-screen-content">
+       <div class="title-container">
+         <h1>Flawfull</h1>
+         <div class="circle-container">
+          	<div></div>
+            <div></div>
+            <div></div>
+          </div>
+      </div>
+     </div>
+
+     <!-- <div id="tab-bar-container"> -->
+       <div id="tab-list-container">
+
+       </div>
+     <!-- </div> -->
+
+     <div id="tab-ledge">
+       <!-- <span class="tab-ledge-tool" id="left-panel-button">&#8610;</span> -->
+       <span class="circle-button tab-ledge-tool" id="back-button">&#8630;</span>
+       <span class="circle-button tab-ledge-tool" id="forward-button">&#8631;</span>
+       <span class="tab-ledge-tool text-button" id="update-button">Updates!</span>
+       <!-- <span class="search-container tab-ledge-tool">
+         <span class="parallelogram">
+           <span>Hi</span>
+
+           <input />
+         </span>
+       </span> -->
+       <div class="search-container">
+          <div class="parallelogram">
+              <input spellCheck="true" id="search-bar" />
+              <span id="search-icon"></span>
+          </div>
+      </div>
+     </div>
+
+     <br />
+
+     <!-- <div id="web-contents"></div> -->
+
+
+     <!-- <div class="search-container">
+        <div class="parallelogram">
+            <input spellCheck="true" id="search-bar" />
+            <span id="search-icon"></span>
+        </div>
+    </div> -->
+
+    <div id="web-container"></div>
+
+
+      <!-- <div class="search-container">
+         <div class="parallelogram">
+             <input class="search-bar" />
+         </div>
+     </div> -->
+
+     <!-- <script src="search.js"></script> -->
+
+      <!-- <button class="submit" onclick="modalSystem.createModal('<h3>Hey there! This is pretty awesome so I\'m just going to continue over here and there</h3>')">HI</button> -->
+
+      <!--Renderer-->
+      <script src="./view.js"></script>
+
+
+      <!--Firebase-->
+
+
+   </body>
+</html>

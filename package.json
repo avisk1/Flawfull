@@ -1,0 +1,51 @@
+{
+  "name": "Flawfull",
+  "version": "1.2.3980",
+  "description": "A random electron app I decided to build for basically no reason",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Rubish",
+  "license": "ISC",
+  "dependencies": {
+    "custom-electron-titlebar": "^3.2.4",
+    "electron-context-menu": "^2.3.0",
+    "electron-updater": "^4.3.5"
+  },
+  "devDependencies": {
+    "electron": "^10.1.1"
+  },
+  "build": {
+    "productName": "Flawfull",
+    "appId": "com.rubbish.flawfull",
+    "icon": "./icons/favicon_io/android-chrome-512x512.png",
+    "mac": {
+      "category": "webbrowser",
+      "icon": "./icons/favicon_io/android-chrome-512x512.png"
+    },
+    "win": {
+      "publish": {
+        "provider": "generic",
+        "url": "https://rubish-flawfull.netlify.app/"
+      },
+      "target": "NSIS"
+    },
+    "linux": {
+      "category": "Web Browser",
+      "target": "AppImage",
+      "publish": [
+        {
+          "provider": "generic",
+          "url": "https://rubish-flawfull.netlify.app/"
+        }
+      ]
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://rubish-flawfull.netlify.app/"
+      }
+    ]
+  }
+}
