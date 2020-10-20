@@ -160,7 +160,7 @@ function setShortcuts() {
 
 let win;
 
-//electron is by far the stupidest most finicky thing ever, just let me freaking change the stupid!!!!! ********** TITLE!!!!
+//just let me change the stupid!!!!! ********** TITLE!!!!
 
 function createWindow() {
   const { screen } = require("electron");
