@@ -1,4 +1,5 @@
 exports.strToNode = (str) => {
+  //converts a string of html to an actual html node
   if (str.includes("<script")) {
     console.warn("Don't be an idiot and remove that script!");
   }
@@ -8,6 +9,7 @@ exports.strToNode = (str) => {
   return content;
 }
 
+//No idea if I even use this; it looks kind of useless
 exports.updateModalValue = (element) => {
   if (element.tagName.toLowerCase() !== "input") {
     console.warn("Not an input element");
@@ -20,17 +22,7 @@ exports.updateModalValue = (element) => {
     console.warn("Can't find \"input-value\"");
     return;
   }
-
 }
-
-// exports.checkIfLoaded = (element) => {
-//   if (element.readyState === "complete") {
-//     alert("loaded!");
-//     return;
-//   }
-//   console.log(element);
-//   setTimeout(exports.checkIfLoaded(element), 100);
-// }
 
 exports.removeElement = (element) => {
   if (element.parentNode) {
@@ -39,13 +31,3 @@ exports.removeElement = (element) => {
     console.warn("Element has no parent. ???");
   }
 }
-
-
-
-// exports.textEditor = (submitOption = true) => {
-//   const contents = {};
-//   contents.html = `
-//
-//   `
-//   return contents;
-// }

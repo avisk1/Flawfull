@@ -3,9 +3,13 @@ const domSystem = require("./domSystem.js");
 const dataSystem = require("./dataSystem.js");
 const searchSystem = require("./searchSystem.js");
 const fileSystem = require("./fileSystem.js");
-const { app } = require("electron").remote;
 const settingSystem = require("./settingSystem.js");
 const bugSystem = require("./bugSystem.js");
+
+const remote = require('electron').remote;
+const Menu = remote.Menu;
+const MenuItem = remote.MenuItem;
+const app = remote.app;
 
 const browserWindow = require("electron").remote.getCurrentWindow();
 
@@ -15,32 +19,102 @@ exports.restart = () => {
   app.exit();
 }
 
-exports.openUpdates = () => {
-  //creates new modal with latest updates
-  const updateModal = modalSystem.createModal(`
-    <h2>Updates | v${app.getVersion()}</h2>
-    <hr />
-    <ul>
-      <li style="font-weight: bold">Added Linux support</li>
-      <li>Compact tab titles</li>
-      <li>Fixed updating url for search bar during webview navigation</li>
-      <li>Provided a white background color for websites without one</li>
-      <li>Added a more...<i>attractive</i> About and Privacy section</li>
-      <li>Added Ctrl + W keyboard shortcut to close tabs</li>
-      <li>Provided a "Restart" button in case of update glitches</li>
-      <li>Moved search bar for larger webview</li>
-    </ul>
-    <h2>Future Updates</h2>
-    <hr />
-    <ul>
-      <li style="font-weight: bold">Working feedback system</li>
-      <li>Improve context menu</li>
-      <li>Open in new tab</li>
-      <li>Add more keyboard shortcuts</li>
-      <li>Add a description for each keyboard shortcut</li>
-    </ul>
-  `)
+exports.openAppMenu = () => {
+  //context menu
+  var menu = new Menu();
+
+  //About
+  menu.append(new MenuItem({
+    label: "About",
+    click: () => {
+      exports.openAbout()
+    },
+  }))
+  //Privacy
+  menu.append(new MenuItem({
+    label: "Privacy",
+    click: () => {
+      exports.openPrivacy()
+    },
+  }))
+  //Settings
+  menu.append(new MenuItem({
+    label: "Settings",
+    click: () => {
+      exports.openSettings()
+    },
+  }))
+  //Help
+  menu.append(new MenuItem({
+    label: "Help",
+    type: "submenu",
+    submenu: [
+      {
+        label: "Feedback",
+        click: () => exports.openFeedback()
+      }, {
+        label: "Report a Bug",
+        click: () => exports.openBugReport()
+      }
+    ]
+  }))
+  //Updates
+  menu.append(new MenuItem({
+    label: "Updates",
+    click: () => exports.openUpdates()
+  }))
+  //Changelog
+  menu.append(new MenuItem({
+    label: "Changelog",
+    click: () => exports.openChangelog()
+  }))
+  //Restart
+  menu.append(new MenuItem({
+    label: "Restart",
+    click: () => exports.restart()
+  }))
+  //Quit
+  menu.append(new MenuItem({
+    label: "Quit",
+    click: () => exports.quit()
+  }))
+
+  menu.popup();
 }
+
+exports.openChangelog = () => {
+  const https = require('https')
+  const options = {
+    hostname: 'rubish-flawfull.netlify.app',
+    port: 443,
+    path: '/changelog.txt',
+    method: 'GET'
+  }
+
+  const req = https.request(options, res => {
+    res.on('data', (data) => {
+      if (res.statusCode === 200) {
+        //creates a changelog modal and appends text from changelog.txt, containing all previous versions
+        const changelogModal = modalSystem.createModal(`
+          <h1>Changelog</h1>
+          <hr />
+          ${data}
+        `)
+      } else {
+        modalSystem.createModal(`
+          <h1>Changelog not found :(</h1>
+        `);
+      }
+    })
+  })
+
+  req.on('error', error => {
+    console.error(error);
+  })
+
+  req.end();
+}
+
 
 //I have no idea what's going on here, so it's _best just to let it lie_
 exports.setMusicVolume = () => {
@@ -156,7 +230,7 @@ exports.setMusic = () => {
 }
 
 exports.searchAllowed = () => {
-  //checks if a there currently is a modal in existence
+  //checks if a there currently is a modal in existence, it not, then return true
   if (!modalSystem.checkModal()) {
     return true;
   }
@@ -164,6 +238,8 @@ exports.searchAllowed = () => {
 }
 
 exports.openSettings = () => {
+
+  //I have no idea what's going on here, but I wrote it so it's probably right
 
   const settingModal = modalSystem.createModal(`
     <h2>Settings</h2>
@@ -236,18 +312,6 @@ exports.openSettings = () => {
     //gathering input:
 
     dataSystem.getSettings();
-
-    // for (let i = 0; i < Object.keys(settings).length; i++) {
-    //   const settingKey = Object.keys(settings)[i];
-    //   const element = document.getElementById(settingKey);
-    //   if (element.classList.contains("option-input") /*|| element.classList.contains("")*/) {
-    //     element.value = settings[settingKey];
-    //   }
-    //   const inputValue =
-    //   if (element.parentNode.getElementsByClassName("input-value")) {
-    //
-    //   }
-    // }
 }
 
 exports.openFeedback = () => {
@@ -260,19 +324,18 @@ exports.openFeedback = () => {
       </div>
       <button disabled="true" class="submit disabled" onclick="dataSystem.submitFeedback(this)">Submit</button>
   `);
-
-  //make accounts and allow user to sign in/sign up
 }
 
 exports.openBugReport = () => {
   //I just wasted 40 minutes of my life coding something that literally could have been solved in one line
 
+  //onclick submits bug through <dataSystem.submitBug(submitBugButton)>
   function addClick() {
     const submitBugButton = document.getElementById("submit-bug");
-    //submits bug through <dataSystem.submitBug(submitBugButton)>
     submitBugButton.addEventListener("click", () => dataSystem.submitBug(submitBugButton));
   }
 
+  //opens bug report
   const bugReportModal = modalSystem.createModal(`
       <h2>Report a Bug</h2>
       <div class="input-container unavailable">
@@ -288,26 +351,17 @@ exports.openBugReport = () => {
 }
 
 exports.openAbout = () => {
-  function addClick() {
-    const githubLink = document.getElementById("github");
-    //when the github link is clicked, it opens it with Flawfull while simultaneously closing all modals
-    githubLink.addEventListener("click", () => {
-      exports.openLink(githubLink.getAttribute("url"));
-      const modal = document.getElementsByClassName("modal");
-      for (let i = 0; i < modal.length; i++) {
-        modalSystem.closeModal(modal[i]);
-      }
-    })
-  }
+  //opens about
   const aboutModal = modalSystem.createModal(`
     <h2>About</h2>
     <div class="modal-text">Flawfull, as its name suggests, is a rather flawed web browser with plenty of issues and unkown glitches. Apart from this, Flawfull allows you to browse the web with
-    all its glory and pride, and provides many different search engine options. It was built by the one and only <span class="link" id="github" url="https://github.com/avisk1">avisk1</span>.
-    <b>Enjoy!</b></div>
-  `, addClick);
+    all its glory and pride, and provides many different search engine options. It was built by the one and only <span class="link" id="github" url="https://github.com/avisk1">avisk1</span>,
+    of the company Rubish&#169;. <b>Enjoy!</b><br /><br />You can visit the official Flawfull website <span class="link" url="https://rubish-flawfull.netlify.app">here</span>.</div>
+  `);
 }
 
 exports.openPrivacy = () => {
+  //opens privacy
   const privacyModal = modalSystem.createModal(`
     <h2>Privacy</h2>
     <div class="modal-text">Flawfull does not collect or track any sort of user data</div>
@@ -344,4 +398,23 @@ exports.quit = () => {
       app.quit();
     }
   })
+}
+
+exports.openUpdates = () => {
+  //creates new modal with latest updates
+  const updateModal = modalSystem.createModal(`
+    <h2>Updates | v${app.getVersion()} (October 21, 2020)</h2>
+    <hr />
+    <ul>
+      <li>Fixed changelog not working</li>
+    </ul>
+    <h2>Future Updates</h2>
+    <hr />
+    <ul>
+      <li>Open in new tab</li>
+      <li>Add a description for each keyboard shortcut</li>
+      <li style="font-weight: bold">Working feedback system</li>
+      <li style="font-weight: bold">Create the left panel</li>
+    </ul>
+  `)
 }

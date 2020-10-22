@@ -5,33 +5,11 @@ const settingSystem = require("./settingSystem.js");
 const { app } = require("electron").remote;
 const path = require("path");
 
-// const transporter = nodemailer.createTransport({
-//   service: 'gmail',
-//   auth: {
-//     user: 'flawfull.help@gmail.com',
-//     pass: ''
-//   }
-// });
-//
-// const mailOptions = {
-//   from: 'flawfull.help@gmail.com',
-//   to: 'myfriend@yahoo.com',
-//   subject: 'Sending Email using Node.js',
-//   text: 'That was easy!'
-// };
-//
-// transporter.sendMail(mailOptions, function(error, info){
-//   if (error) {
-//     console.log(error);
-//   } else {
-//     console.log('Email sent: ' + info.response);
-//   }
-// });
-
 exports.getPath = (file) => {
+  //gets the path of a file and returns it
   const appData = app.getPath("userData");
-  const path = path.join(appData, file);
-  return path;
+  const thing_path = path.join(appData, file);
+  return thing_path;
 }
 
 exports.getSettings = () => {
@@ -39,15 +17,13 @@ exports.getSettings = () => {
     const settings = settingSystem.getSettings();
     const settingsLength = Object.keys(settings).length;
 
-    console.log(settings);
-
+    //I just have no idea
     for (const key in settings) {
       const element = document.getElementById(key);
       if (!element) {
           console.warn("Element not found (id from settings key)");
           return;
       }
-
 
       element.value = settings[key];
 
@@ -66,6 +42,7 @@ exports.getSettings = () => {
 exports.getData = (modal) => {
   //Don't make your own errors; JavaScript has enough of them!
 
+  //Checks if the modal is a modal. Why..?
   if (!modal.classList.contains("modal")) {
     console.warn("Not a modal");
     return;
@@ -77,12 +54,16 @@ exports.getData = (modal) => {
 
   const inputList = [];
 
+  //iterates through each inputContainer element
   inputContainers.forEach((container) => {
+    //iterates through its children
     for (let i = 0; i < container.children.length; i++) {
       const element = container.children[i];
+      //if it's some sort of general input element
       if (element.tagName.toLowerCase() === "input" || element.tagName.toLowerCase() === "textarea" || element.tagName.toLowerCase() === "select") {
         const obj = { };
         obj.id = element.id;
+        //checks which type of input, and adds the value to obj based on the element's "value" property
         if (element.classList.contains("option-input")) {
           obj.value = element.value;
         } else if (element.classList.contains("file-input")) {
@@ -93,6 +74,7 @@ exports.getData = (modal) => {
           console.warn("Invalid input class");
           return;
         }
+        //appends it to inputList
         inputList.push(obj);
       }
     }
@@ -103,13 +85,14 @@ exports.getData = (modal) => {
 }
 
 
-
+//useless
 exports.submitBug = (button) => {
   const modal = button.parentNode.parentNode.parentNode;
   const inputList = dataSystem.getData(modal);
   console.log(inputList);
 }
 
+//useless
 exports.submitFeedback = (button) => {
   const modal = button.parentNode.parentNode.parentNode;
   const inputList = dataSystem.getData(modal);
@@ -128,40 +111,32 @@ exports.submitSettings = (button) => {
     return;
   }
 
-
+  //gets the data from the modal
   const inputList = dataSystem.getData(modal);
 
+  //gets the settings before they've been changed
   const preSettings = settingSystem.getSettings();
 
-
-  // const inputContainers = [...button.parentNode.getElementsByClassName("input-container")];
+  //iterates through inputList and sets each corresponding property in settings
   inputList.forEach((input) => {
     fileSystem.setFileProperty(settingSystem.getSettingsPath(), input.id, input.value);
   })
 
-
+  //gets latest settings
   const settings = settingSystem.getSettings();
 
+  //iterates through all of settings' keys
   for (let i = 0; i < Object.keys(settings).length; i++) {
     let keyName = Object.keys(settings)[i];
+    //if the current setting was changed just now
     if (preSettings[keyName] !== settings[keyName]) {
-      console.log(preSettings[keyName]);
-      console.log(settings[keyName]);
-      console.log(keyName);
+      //Oh, so _that's_ what it's for
       if (appF.settingFunctions[keyName]) {
         appF.settingFunctions[keyName];
-        console.log(appF.settingFunctions[keyName]);
       }
     }
   }
 
-
   modalSystem.closeModal(modal);
-
-  //immediate setting changes:
-
-  // appF.setMusic(preSettings);
-
-
 
 }

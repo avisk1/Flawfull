@@ -1,18 +1,9 @@
-// async function hi() {
-//   await test;
-//   return test;
-// }
 const fs = require("fs");
 const os = require('os');
 
 const { remote } = require("electron");
-
 const { app, Menu, MenuItem, shell } = remote;
-
-
 const { Titlebar, Color } = require('custom-electron-titlebar');
-
-
 
 //DO NOT CHANGE THIS TO OBJECT DESTRUCTURING
 
@@ -27,8 +18,12 @@ const searchSystem = require("./Functions/searchSystem.js");
 const settingSystem = require("./Functions/settingSystem.js");
 const bugSystem = require("./Functions/bugSystem.js");
 
-const { autoUpdater } = remote.require('electron-updater');
+const contextMenu = require("./contextMenu.js");
 
+const { autoUpdater } = remote.require('electron-updater');
+const { ipcRenderer } = require("electron");
+
+//sets autoDownload to false for manual updating
 autoUpdater.autoDownload = false;
 
 autoUpdater.on("update-available", () => {
@@ -41,19 +36,30 @@ autoUpdater.on("update-available", () => {
       autoUpdater.downloadUpdate();
     });
   }
+  //if there is an update available, create an update modal that downloads the update on the click of the button
   const restartModal = modalSystem.createModal(`
     <h4>Flawfull is ready to update</h4>
     <h5 id="progress"></h5>
     <h5 id="error" style="color: red !important"></h5>
     <button id="restart">Update</button>
   `, restartOnClick, true, true);
+
+  autoUpdater.on("error", (err) => {
+    const error = document.getElementById("error");
+    error.innerHTML = "Sorry, but there has been an error. Please close Flawfull and try again. ";
+    // alert(err.message);
+    console.error(err);
+  })
+  //once the update has downloaded, quit and install
+  //Flawfull should restart after this
   autoUpdater.on("update-downloaded", () => {
     console.log("Update has been downloaded");
     setImmediate(() => {
       autoUpdater.quitAndInstall(false, true);
     })
-    // autoUpdater.quitAndInstall(false, true);
   });
+  //this just _doesn't_ work
+  //It looks nice though, or it would if it worked
   autoUpdater.on("download-progress", (progress, bps, percent, total, transferred) => {
     var progress = document.getElementById("progress");
     progress.innerHTML = "Download: " + percent + "%";
@@ -63,27 +69,14 @@ autoUpdater.on("update-not-available", () => {
   console.log("Update not available!");
 })
 
-autoUpdater.on("error", (err) => {
-  // const error = document.getElementById("error");
-  // error.innerHTML = "Sorry, but there has been an error. Please close Flawfull and try again.";
-  alert(err.message);
-  console.error(err);
-})
-
 autoUpdater.checkForUpdates();
-
-
-
-
 
 // alert("this will happen and it'll kinda suck. not the real at all");
 // alert("Crap, this is the actual one you want to see ;(");
 
-const { ipcRenderer } = require("electron");
-
-
 //creating settings if it doesn't exist
 
+//This hurts my eyes...
 if (!fs.existsSync(settingSystem.getSettingsPath())) {
   fs.appendFileSync(settingSystem.getSettingsPath(), JSON.stringify(settingSystem.defaultSettings));
   console.log(`${settingSystem.getSettingsPath()} created`);
@@ -99,91 +92,13 @@ if (!fs.existsSync(settingSystem.getSettingsPath())) {
 
 if (bugSystem.getBug()) appF.restart();
 
-// console.log(process.env);
+//process.env
 console.log(app.getVersion());
-
-console.log("new!");
-
-// ipcRenderer.on('asynchronous-reply', (event, arg) => {
-//   if (arg == "true") {
-//     const restartOnClick = () => {
-//       const restartButton = document.getElementById("restart");
-//       restartButton.addEventListener("click", () => {
-//         console.log("clicked!");
-//         ipcRenderer.send("asynchronous-message", "consent-to-update");
-//       });
-//     }
-//     const restartModal = modalSystem.createModal(`
-//       <h4>Flawfull is ready to update</h4>
-//       <button id="restart">Update</button>
-//     `, restartOnClick, true, true);
-//   }
-// })
-//
-// ipcRenderer.send('asynchronous-message', 'update?');
-
-
-
-// console.log(config);
-// //DO THIS!!!!
-//
-// ipcRenderer.on('asynchronous-reply', (event, arg) => {
-//   console.log(arg);
-//   console.log(fileSystem.getFile(settingSystem.getSettingsPath()).justUpdated);
-//   console.log(arg.updateInfo.version);
-//   // const settings = fileSystem.getFile(settingSystem.getSettingsPath());
-//   if (arg.updateInfo.version !== app.getVersion()) {
-//     //if the latest version is not equal to the app's version
-//     //not up to date
-//     fileSystem.setFileProperty(settingSystem.getSettingsPath(), "justUpdated", "true");
-//     // config.justUpdated = true;
-//     alert("You are not up to date. After you close this window, everything should update and you will receieve a cool message! (Hopefully)");
-//   } else if ((fileSystem.getFile(settingSystem.getSettingsPath()).justUpdated === "true" || fileSystem.getFile(settingSystem.getSettingsPath()).justUpdated == true) && arg.updateInfo.version === app.getVersion()) {
-//     alert("You just updated! Congratulations!");
-//     fileSystem.setFileProperty(settingSystem.getSettingsPath(), "justUpdated", "false");
-//   }
-//   // if (arg) {
-//   //   alert("Freaking update available >:(");
-//   // } else {
-//   //   alert("No updates");
-//   // }
-// })
-//
-// ipcRenderer.send('asynchronous-message', 'update?');
-
-// if (ipcRenderer.sendSync('synchronous-message', 'uptate?')) {
-//   alert("Update available (test)");
-//   const updates = modalSystem.createModal(`
-//
-//   `);
-// } else {
-//   alert("There's no update today!");
-// }
-
-
-
 
 console.log("%cLEAVE", "color:red; font-weight: bold");
 
-
-
 //removes default menu/shortcuts
 Menu.setApplicationMenu(null);
-
-//REMOVE || TRUE!!!!
-// if (app.getVersion() == "1.2.3926" || true) {
-//   function eventListeners() {
-//
-//   }
-//   modalSystem.createModal(`
-//     <h4>Flawfull has successfully been installed. Please wait for a notification
-//   `, null, true, true);
-// }
-
-
-
-
-
 
 //============================================> ALL EVENT LISTENERS HERE <============================================
 
@@ -192,15 +107,15 @@ updateButton.addEventListener("click", () => {
   appF.openUpdates();
 })
 
+const generalMenu = document.getElementById("general-menu");
+generalMenu.addEventListener("click", () => appF.openAppMenu());
+
 let previousKeys = [];
 let keyCombo = "";
 
 document.body.addEventListener("keydown", (e) => {
     previousKeys.push(e.which);
     keyCombo = previousKeys.join("+");
-    // if (e.which === 123) { //F12
-    //   require('electron').remote.getCurrentWindow().toggleDevTools();
-    //   previousKeys = [];
     if (keyCombo.includes("17+16+73")) { //ctrl shift i
       require("electron").remote.getCurrentWindow().toggleDevTools();
       previousKeys = [];
@@ -219,23 +134,6 @@ console.log(`OS CPU Architecture: ${os.arch()}`);
 
 const allButtons = [...document.getElementsByTagName("BUTTON")];
 
-// document.body.addEventListener("mousedown", (e) => submitButtonClick(e, "#003d82", "#146dd1"));
-// document.body.addEventListener("mouseup", (e) => submitButtonClick(e, "#146dd1", "#003d82"));
-
-// document.body.addEventListener("click", (e) => submitButton(e));
-
-function submitButtonClick(e, gradient1, gradient2) {
-  if (e.target.classList.contains("submit")) {
-    const btn = e.target;
-    btn.style.backgroundImage = `linear-gradient(${gradient1}, ${gradient2})`;
-    btn.style.outline = "transparent";
-  }
-}
-
-
-
-
-
 
 const menu = new Menu();
 
@@ -243,48 +141,11 @@ const session = { };
 
 session.settings = settingSystem.getSettings();
 
-//MAIN FUNCTION ↓↓↓
-function main() {
-  // if (generalSystem.emptyObj(session.settings)) { //if settings is empty
-  //   appF.openSettings();
-  // }
-
-  //append search.js to document and remove it from html file
-
-  //default tasks
-  if (session.settings) {
-    for (let i = 0; i < Object.keys(session.settings).length; i++) {
-      const currentSetting = Object.keys(session.settings)[i];
-      if (currentSetting) {
-        appF.settingFunctions[i];
-      } else {
-        console.warn("Issue with current setting");
-      }
-    }
-  }
-
-  const newTab = searchSystem.newTab();
-
-
-}
-
-
-//
-// function submitSettings(btn) {
-//   btn.blur();
-//
-//   const inputContainers = [...btn.parentNode.getElementsByClassName("input-container")];
-//   inputContainers.forEach((container) => {
-//     const input = container.getElementsByClassName("modal-input")[0];
-//     fileSystem.setFileProperty("./settings.json", input.id, input.value)
-//   })
-//
-//   //                        container  modalContent modal
-//   // const modalContainer = btn.parentNode.parentNode.parentNode;
-//   // modal.closeModal(modalContainer);
+//MAIN FUNCTION
+//I just realized this is really dumb
+// function main() {
+//   const newTab = searchSystem.newTab();
 // }
-
-
 
 menu.append(new MenuItem({
   label: `Flawfull`,
@@ -365,18 +226,13 @@ var load = setInterval(() => {
             setTimeout(() => {
               loadingScreenContent.parentNode.removeChild(loadingScreenContent);
             }, 800);
-            main();
+              const newTab = searchSystem.newTab();
           }, 1500);
         }, 1500);
         clearInterval(load);
       }
     }
 }, 500);
-
-
-
-
-
 
 const bar = new Titlebar({
     backgroundColor: Color.fromHex('#0079c2'),
