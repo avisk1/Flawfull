@@ -2,6 +2,7 @@ const domSystem = require("./domSystem.js");
 const fileSystem = require("./fileSystem.js");
 const browserWindow = require("electron").remote.getCurrentWindow();
 const settingSystem = require("./settingSystem.js");
+const bugSystem = require("./bugSystem.js");
 
 const remote = require("electron").remote;
 
@@ -10,6 +11,9 @@ const remote = require("electron").remote;
 const domainList = [ "com", "org", "net", "ca", "edu", "io", "app" ];
 
 const searchBar = document.getElementById("search-bar");
+searchBar.parentNode.style.top = "0px";
+searchBar.parentNode.style.left = "0px";
+
 searchBar.addEventListener("change", () => {
   //removes spell check if it detects a domain
   for (let i = 0; i < domainList.length; i++) {
@@ -171,8 +175,35 @@ exports.getDefaultUrl = () => {
 exports.search = (query) => {
 
   const searchBar = document.getElementById("search-bar");
+
+  if (bugSystem.getBug()) {
+    console.log("Moving...");
+    const directionY = Math.floor(Math.random() * 3) - 1;
+    const directionX = Math.floor(Math.random() * 3) - 1;
+    searchBar.parentNode.style.top = (parseInt(searchBar.parentNode.style.top.slice(0, -2)) + directionY * 20) + "px";
+    searchBar.parentNode.style.left = (parseInt(searchBar.parentNode.style.left.slice(0, -2)) + directionX * 20) + "px";
+  }
+
+
   const tab = exports.selectedTab();
   const view = exports.getCorrespondingWebview(tab);
+
+  if (bugSystem.getBug() && Math.floor(Math.random() * 2) == 1) {
+
+    view.previousTransition = window.getComputedStyle(view, null).getPropertyValue("transition");
+    view.style.transition = "2s ease";
+    view.style.transform = "rotateX(180deg)";
+
+    const randomTime = Math.floor(Math.random() * 60000);
+
+    setTimeout(() => {
+        view.style.transform = "rotateX(0deg)";
+      setTimeout(() => {
+          view.style.transition = view.previousTransition;
+      }, 2000);
+    }, randomTime);
+
+  }
 
   let domain = false;
   //iterates through domain list and checks to see if one is included in the query (checking if it's a url)
@@ -229,18 +260,25 @@ exports.selectedTab = () => {
 //selects the given tab
 exports.select = (tab) => {
 
+  const tabs = document.getElementsByClassName("tab");
+
+  if (bugSystem.getBug()) {
+    const randomTab = Math.floor(Math.random() * tabs.length);
+    tab = tabs[randomTab];
+    console.log(tab);
+  }
+
   const searchBar = document.getElementById("search-bar");
   searchBar.value = tab.url;
   const view = exports.getCorrespondingWebview(tab);
 
   view.newTab = false;
 
-  //Pretty sure this does literally nothing
-  // view.addEventListener("dom-ready", () => {
-  //   searchBar.value = view.getURL();
-  // })
+  //Nevermind
+  view.addEventListener("dom-ready", () => {
+    searchBar.value = view.getURL();
+  })
 
-  const tabs = document.getElementsByClassName("tab");
   const webViews = document.getElementsByClassName("web-contents");
 
   //deselects all tabs and hides all webviews
@@ -439,7 +477,7 @@ exports.newTab = (url = null) => {
 //instead it makes too many tabs
 
 view.newTab = false;
- // 
+ //
  // view.addEventListener("dom-ready", () => {
  //   remote.webContents.fromId(view.getWebContentsId()).on('before-input-event', (event, input) => {
  //     if (input.type !== 'keyDown') {
@@ -473,7 +511,7 @@ view.newTab = false;
   //if the load fails, alert the error description
    view.addEventListener("did-fail-load", (event) => {
      console.error(event.errorDescription);
-     alert(event.errorDescription);
+     // alert(event.errorDescription);
    })
 
   view.classList.add("web-contents");

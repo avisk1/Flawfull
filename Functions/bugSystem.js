@@ -8,3 +8,13 @@ exports.getBug = () => {
   }
   return false;
 }
+
+exports.removeBugs = () => {
+  //checks if bug chance is set to 0
+  const bugChance = settingSystem.getSettings().bugChance;
+  if (bugChance == 0) {
+    //if so, remove all currently active bugs:
+    const searchBar = document.getElementById("search-bar");
+    searchBar.parentNode.style.top = "0px";
+  }
+}

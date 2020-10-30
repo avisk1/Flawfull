@@ -265,6 +265,8 @@
   justify-content: center;
   align-items: center;
   -webkit-box-shadow: 0 0 4px black;
+  position: relative;
+  transition: 1s ease;
 }
 
 #search-bar {

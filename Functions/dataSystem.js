@@ -15,14 +15,16 @@ exports.getPath = (file) => {
 exports.getSettings = () => {
   //get root directory here and get the settings from that
     const settings = settingSystem.getSettings();
+    console.log(settings);
     const settingsLength = Object.keys(settings).length;
-
     //I just have no idea
-    for (const key in settings) {
+    for (let key in settings) {
+      console.log(key);
       const element = document.getElementById(key);
+      console.log(element);
       if (!element) {
           console.warn("Element not found (id from settings key)");
-          return;
+          continue;
       }
 
       element.value = settings[key];
@@ -132,7 +134,7 @@ exports.submitSettings = (button) => {
     if (preSettings[keyName] !== settings[keyName]) {
       //Oh, so _that's_ what it's for
       if (appF.settingFunctions[keyName]) {
-        appF.settingFunctions[keyName];
+        appF.settingFunctions[keyName]();
       }
     }
   }

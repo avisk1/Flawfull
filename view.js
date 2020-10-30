@@ -80,14 +80,17 @@ autoUpdater.checkForUpdates();
 if (!fs.existsSync(settingSystem.getSettingsPath())) {
   fs.appendFileSync(settingSystem.getSettingsPath(), JSON.stringify(settingSystem.defaultSettings));
   console.log(`${settingSystem.getSettingsPath()} created`);
-  appF.openSettings();
+  appF.openSettings(true);
 } else {
   const settings = fileSystem.getFile(settingSystem.getSettingsPath());
+  let change = false;
   for (let i = 0; i < Object.keys(settingSystem.defaultSettings).length; i++) {
     if (!(Object.keys(settingSystem.defaultSettings)[i] in settings)) {
       fileSystem.setFileProperty(settingSystem.getSettingsPath(), Object.keys(settingSystem.defaultSettings)[i], settingSystem.defaultSettings[Object.keys(settingSystem.defaultSettings)[i]]);
+      change = true;
     }
   }
+  if (change) appF.openSettings();
 }
 
 if (bugSystem.getBug()) appF.restart();

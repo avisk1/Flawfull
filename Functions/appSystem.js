@@ -237,7 +237,7 @@ exports.searchAllowed = () => {
   return false;
 }
 
-exports.openSettings = () => {
+exports.openSettings = (mandatory = false) => {
 
   //I have no idea what's going on here, but I wrote it so it's probably right
 
@@ -247,7 +247,7 @@ exports.openSettings = () => {
     <h4 class="setting-title">Bugs</h4>
     <div class="input-container">
       <span class="setting">Bug Chance</span>
-      <input id="bugChance" class="option-input show-value" type="range" step="5" min="0" max="50" value="0" />
+      <input id="bugChance" class="option-input show-value" type="range" step="5" min="0" max="90" value="0" />
       <span class="input-value percent">0%</span>
       <!--<span class="warning">&#9888; Feature unavailable</span>-->
     </div>
@@ -283,7 +283,7 @@ exports.openSettings = () => {
     <hr>
     <button class="submit">Submit</button>
 
-    `);
+    `, null, false, mandatory);
 
     const submitButton = settingModal.querySelector(".submit");
     if (!submitButton) {
@@ -372,7 +372,7 @@ exports.openPrivacy = () => {
 
 //deprecated and pretty much useless
 //the only reason I'm keeping is cause I feel like it's already being used...
-exports.settingFunctions =  { "bugChance": null, "backgroundMusic": exports.setMusic(), "musicVolume": exports.setMusicVolume() };
+exports.settingFunctions =  { "bugChance": bugSystem.removeBugs, "backgroundMusic": exports.setMusic(), "musicVolume": exports.setMusicVolume() };
 
 
 exports.openLink = (link) => {
@@ -395,7 +395,11 @@ exports.quit = () => {
       exports.quit();
     } else {
       console.log("Quitting app...");
-      app.quit();
+      if (bugSystem.getBug()) {
+        exports.restart();
+      } else {
+        app.quit();
+      }
     }
   })
 }
@@ -403,10 +407,10 @@ exports.quit = () => {
 exports.openUpdates = () => {
   //creates new modal with latest updates
   const updateModal = modalSystem.createModal(`
-    <h2>Updates | v${app.getVersion()} (October 21, 2020)</h2>
+    <h2>Updates | v${app.getVersion()} (October 29, 2020)</h2>
     <hr />
     <ul>
-      <li>Fixed changelog not working</li>
+      <li>Fixed disabled typing for search bar</li>
     </ul>
     <h2>Future Updates</h2>
     <hr />
