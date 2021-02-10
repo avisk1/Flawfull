@@ -3,6 +3,29 @@ const modalSystem = require("./modalSystem.js");
 const dataSystem = require("./dataSystem.js");
 const fileSystem = require("./fileSystem.js");
 
+exports.createWarning = (message) => {
+  function edits() {
+    const modalContent = document.querySelector(".modal-content");
+    modalContent.style.backgroundColor = "yellow";
+    const modalContentInner = document.querySelector(".modal-content-inner");
+    modalContentInner.style.color = "red";
+    modalContentInner.style.fontWeight = "bold";
+    modalContentInner.style.fontSize = "35px";
+    modalContentInner.style.textAlign = "center";
+    modalContentInner.innerHTML = modalContentInner.innerHTML + `
+      <br />
+      <button id="confirm">CONTINUE</button>
+    `
+    const confirm = document.getElementById("confirm");
+    confirm.addEventListener("click", () => {
+      exports.closeModal(modal);
+    })
+    const modal = document.querySelector(".modal");
+    modal.style.backgroundColor = "red";
+  }
+  exports.createModal(message, edits, true, true);
+}
+
 exports.createModal = (content, functionCall, centered = false, mandatory = false) => {
 
   //modal
@@ -78,7 +101,7 @@ exports.createModal = (content, functionCall, centered = false, mandatory = fals
   const links = modalContent.getElementsByClassName("link");
   for (let i = 0; i < links.length; i++) {
     links[i].addEventListener("click", () => {
-      appF.openLink(links[i].getAttribute("url"));
+      appF.openLink(links[i].getAttribute("flawfull-url"));
       exports.closeModal(modal);
     });
   }
@@ -100,4 +123,11 @@ exports.checkModal = () => {
     return true;
   }
   return false;
+}
+
+exports.closeAllModals = () => {
+  const modals = document.getElementsByClassName("modal");
+  for (let i = 0; i < modals.length; i++) {
+    domSystem.removeElement(modals[i]);
+  }
 }

@@ -7,11 +7,36 @@ const settingSystem = require("./settingSystem.js");
 const bugSystem = require("./bugSystem.js");
 
 const remote = require('electron').remote;
+const { ipcRenderer } = require("electron");
+const { getElementsByTagName } = require("custom-electron-titlebar/lib/common/dom");
+const { appendFile } = require("fs");
 const Menu = remote.Menu;
 const MenuItem = remote.MenuItem;
 const app = remote.app;
 
 const browserWindow = require("electron").remote.getCurrentWindow();
+
+// ipcRenderer.on("openNewTabRequest", (event, arg) => {
+//   exports.openLink(arg);
+//   console.log("SUCCESS");
+// })
+
+// ipcRenderer.send("data-request", "please work");
+
+//  searchData = new Promise((resolve, reject) => {
+//     ipcRenderer.on("data-request", (event, arg) => {
+//       resolve(arg);
+//     })
+//   })
+
+ipcRenderer.send("new-tab-request", "please work");
+
+ipcRenderer.on("new-tab-request", (event, arg) => {
+  // alert("OH YEAH!!!");
+  // alert(arg);
+  console.log("what?");
+  exports.openLink(arg);
+})
 
 exports.restart = () => {
   //relaunches the app and then promptly exits it, restarting
@@ -46,17 +71,12 @@ exports.openAppMenu = () => {
   }))
   //Help
   menu.append(new MenuItem({
-    label: "Help",
-    type: "submenu",
-    submenu: [
-      {
-        label: "Feedback",
-        click: () => exports.openFeedback()
-      }, {
-        label: "Report a Bug",
-        click: () => exports.openBugReport()
-      }
-    ]
+    label: "Report an issue",
+    click: () => exports.openFeedback()
+  }))
+  menu.append(new MenuItem({
+    label: "Request a Feature",
+    click: () => exports.openRequests()
   }))
   //Updates
   menu.append(new MenuItem({
@@ -85,15 +105,15 @@ exports.openAppMenu = () => {
 exports.openChangelog = () => {
   const https = require('https')
   const options = {
-    hostname: 'rubish-flawfull.netlify.app',
+    hostname: 'rubish.netlify.app',
     port: 443,
-    path: '/changelog.txt',
+    path: '/flawfull/changelog.txt',
     method: 'GET'
   }
 
   const req = https.request(options, res => {
     res.on('data', (data) => {
-      if (res.statusCode === 200) {
+      if (res.statusCode == 200) {
         //creates a changelog modal and appends text from changelog.txt, containing all previous versions
         const changelogModal = modalSystem.createModal(`
           <h1>Changelog</h1>
@@ -110,10 +130,92 @@ exports.openChangelog = () => {
 
   req.on('error', error => {
     console.error(error);
+    modalSystem.createModal(`
+      <h1>Changelog not found :(</h1>
+    `);
   })
 
   req.end();
 }
+
+//FEATURES
+
+exports.openHistory = () => {
+  const historyFile = dataSystem.getPath("history.json");
+  const data = fileSystem.getFile(historyFile);
+  let outputHTML = "";
+  for (let i = data.length - 1; i >= 0; i--) {
+    outputHTML += `<span class='history-element'>${data[i].date} | ${data[i].time} | <img src="${data[i].favicon}" /> 
+    ${data[i].title} | <span class="link" flawfull-url="${data[i].url}">${data[i].url}</span></span><br />`;
+  }
+
+  function purge() {
+    const purge = document.getElementById("purge");
+    const elements = document.getElementsByClassName("history-element");
+    purge.addEventListener("click", () => {
+      // for (let i = 0; i < elements.length; i++) {
+      //   setTimeout(() => {
+      //     //work on this at some point
+      //     elements[i].parentNode.removeChild(elements[i]);
+      //   }, 200);
+      // }
+      exports.crash();
+    })
+  }
+  
+  modalSystem.createModal(`
+    <h2>Search History | <button id="purge">Purge</button></h2>
+    <hr>
+    <!--<span class="warning">&#9888; Feature unavailable</span>-->
+    ${outputHTML}
+  `, purge)
+}
+
+exports.openBookmarks = () => {
+  const bookmarkFile = dataSystem.getPath("bookmarks.json");
+  const data = fileSystem.getFile(bookmarkFile);
+  function initialize() {
+    let x;
+    for (let i = data.length - 1; i >= 0; i--) {
+      x = document.getElementsByClassName("bookmark-element")[i].querySelector(".x");
+      x.addEventListener("click", () => {
+        console.log(x);
+        console.log(x.parentNode);
+        
+        const bookmarksFile = dataSystem.getPath("bookmarks.json");
+        fileSystem.removeObjBasedOnProperty(bookmarksFile, "url", x.parentNode.querySelector(".link").getAttribute("flawfull-url"));
+        x.parentNode.parentNode.removeChild(x.parentNode);
+      })
+    }
+  }
+  let outputHTML = "";
+  for (let i = data.length - 1; i >= 0; i--) {
+    outputHTML += `<span class="bookmark-element"><img src="${data[i].favicon}" /> ${data[i].title} | 
+    <span class="link" flawfull-url="${data[i].url}">${data[i].url}</span> | <img class="x" id="${data[i].url}" src="https://i.ibb.co/zHw126t/x.png" /></span><br/>`;
+  }
+  modalSystem.createModal(`
+    <h2>Bookmarks | <span class="warning">Warning: very glitchy at the moment</h2>
+    <hr>
+    ${outputHTML}
+  `, initialize);
+}
+
+//Do this later
+// exports.openPasswords = () => {
+//   let modal;
+//   function passwording() {
+//     const passwords = document.getElementById("passwords");
+//     modal.addEventListener("keydown", (e) => {
+//       if (e.which == 13) {
+        
+//       }
+//     })
+//   }
+//   modal = modalSystem.createModal(`
+//     <h2>Passwords</h2>
+//     Put your passwords here and click enter for each password: <input id="passwords" />
+//   `, passwording);
+// }
 
 
 //I have no idea what's going on here, so it's _best just to let it lie_
@@ -247,7 +349,7 @@ exports.openSettings = (mandatory = false) => {
     <h4 class="setting-title">Bugs</h4>
     <div class="input-container">
       <span class="setting">Bug Chance</span>
-      <input id="bugChance" class="option-input show-value" type="range" step="5" min="0" max="90" value="0" />
+      <input id="bugChance" class="option-input show-value" type="range" step="5" min="0" max="100" value="0" />
       <span class="input-value percent">0%</span>
       <!--<span class="warning">&#9888; Feature unavailable</span>-->
     </div>
@@ -291,6 +393,8 @@ exports.openSettings = (mandatory = false) => {
       return;
     }
     submitButton.addEventListener("click", () => dataSystem.submitSettings(submitButton));
+    
+    submitButton.addEventListener("click", () => exports.notification("New settings applied"))
 
     const modal = submitButton.parentNode.parentNode.parentNode;
 
@@ -299,6 +403,15 @@ exports.openSettings = (mandatory = false) => {
     //updating values for elements who need value updating
 
     const showValueElements = modalContent.getElementsByClassName("show-value");
+
+    const bugChance = document.getElementById("bugChance");
+    
+    bugChance.addEventListener("input", () => {
+      if (bugChance.value > 90) {
+        dataSystem.submitSettings(submitButton);
+        modalSystem.createWarning("THIS MAY CAUSE UNWANTED RESULTS. ARE YOU SURE YOU WANT TO CONTINUE?");
+      }
+    });
 
     [...showValueElements].forEach((element) => {
         element.addEventListener("input", () => {
@@ -314,49 +427,63 @@ exports.openSettings = (mandatory = false) => {
     dataSystem.getSettings();
 }
 
-exports.openFeedback = () => {
-  //fix this please, as it doesn't work
-  const feedbackModal = modalSystem.createModal(`
-      <h2>Feedback</h2>
-      <div class="input-container unavailable">
-        <textarea id="feedbackDescription" class="text-input"></textarea>
-        <span class="warning">&#9888; Feature unavailable</span>
-      </div>
-      <button disabled="true" class="submit disabled" onclick="dataSystem.submitFeedback(this)">Submit</button>
+exports.openRequests = () => {
+  modalSystem.createModal(`
+      <h2>Request a Feature</h2>
+      Contact <a class="link" href="mailto:flawfull.help@gmail.com">flawfull.help@gmail.com</a> to request a feature
   `);
 }
 
-exports.openBugReport = () => {
-  //I just wasted 40 minutes of my life coding something that literally could have been solved in one line
+exports.openFeedback = () => {
+  const feedbackModal = modalSystem.createModal(`
+      <h2>Report an Issue</h2>
+      Contact <a class="link" href="mailto:flawfull.help@gmail.com">flawfull.help@gmail.com</a> to request a feature
+  `);
+  
 
-  //onclick submits bug through <dataSystem.submitBug(submitBugButton)>
-  function addClick() {
-    const submitBugButton = document.getElementById("submit-bug");
-    submitBugButton.addEventListener("click", () => dataSystem.submitBug(submitBugButton));
-  }
-
-  //opens bug report
-  const bugReportModal = modalSystem.createModal(`
-      <h2>Report a Bug</h2>
-      <div class="input-container unavailable">
-        <textarea id="bugDescription" class="text-input"></textarea>
-        <span class="warning">&#9888; Feature unavailable</span>
-      </div>
-      <div class="input-container unavailable">
-        <input id="bugScreenshot" type="file" class="file-input" multiple/>
-        <span class="warning">&#9888; Feature unavailable</span>
-      </div>
-      <button id="submit-bug" class="submit disabled">Submit</button>
-    `, addClick);
+  //screw that, just use email lol
+  //fix this please, as it doesn't work
+  // const feedbackModal = modalSystem.createModal(`
+  //     <h2>Feedback</h2>
+  //     <div class="input-container unavailable">
+  //       <textarea id="feedbackDescription" class="text-input"></textarea>
+  //       <span class="warning">&#9888; Feature unavailable</span>
+  //     </div>
+  //     <button disabled="true" class="submit disabled" onclick="dataSystem.submitFeedback(this)">Submit</button>
+  // `);
 }
+
+// exports.openBugReport = () => {
+//   //I just wasted 40 minutes of my life coding something that literally could have been solved in one line
+
+//   //onclick submits bug through <dataSystem.submitBug(submitBugButton)>
+//   function addClick() {
+//     const submitBugButton = document.getElementById("submit-bug");
+//     submitBugButton.addEventListener("click", () => dataSystem.submitBug(submitBugButton));
+//   }
+
+//   //opens bug report
+//   const bugReportModal = modalSystem.createModal(`
+//       <h2>Report a Bug</h2>
+//       <div class="input-container unavailable">
+//         <textarea id="bugDescription" class="text-input"></textarea>
+//         <span class="warning">&#9888; Feature unavailable</span>
+//       </div>
+//       <div class="input-container unavailable">
+//         <input id="bugScreenshot" type="file" class="file-input" multiple/>
+//         <span class="warning">&#9888; Feature unavailable</span>
+//       </div>
+//       <button id="submit-bug" class="submit disabled">Submit</button>
+//     `, addClick);
+// }
 
 exports.openAbout = () => {
   //opens about
   const aboutModal = modalSystem.createModal(`
     <h2>About</h2>
     <div class="modal-text">Flawfull, as its name suggests, is a rather flawed web browser with plenty of issues and unkown glitches. Apart from this, Flawfull allows you to browse the web with
-    all its glory and pride, and provides many different search engine options. It was built by the one and only <span class="link" id="github" url="https://github.com/avisk1">avisk1</span>,
-    of the company Rubish&#169;. <b>Enjoy!</b><br /><br />You can visit the official Flawfull website <span class="link" url="https://rubish-flawfull.netlify.app">here</span>.</div>
+    all its glory and pride, and provides many different search engine options. It was built by the one and only <span class="link" id="github" flawfull-url="https://github.com/avisk1">avisk1</span>,
+    of the company Rubish&#169;. <b>Enjoy!</b><br /><br />You can visit the official Flawfull website <span class="link" flawfull-url="https://rubish.netlify.app/flawfull">here</span>.</div>
   `);
 }
 
@@ -377,7 +504,14 @@ exports.settingFunctions =  { "bugChance": bugSystem.removeBugs, "backgroundMusi
 
 exports.openLink = (link) => {
   //creates a new tab with a link attached
-  const tab = searchSystem.newTab(link);
+  if (link) {
+    const tab = searchSystem.newTab(link);
+  }
+  modalSystem.closeAllModals();
+}
+
+exports.crash = () => {
+  app.quit();
 }
 
 exports.quit = () => {
@@ -404,21 +538,52 @@ exports.quit = () => {
   })
 }
 
+exports.notification = (message) => {
+  const element = document.createElement("div");
+  element.id = "notification";
+  element.innerHTML = message;
+  function close() {
+    element.style.bottom = "-34px";
+    setTimeout(() => {
+      element.parentNode.removeChild(element);
+    }, 300);
+  }
+  element.addEventListener("click", () => {
+    close();
+  })
+
+  document.getElementsByClassName("container-after-titlebar")[0].appendChild(element);
+
+  setTimeout(() => {
+    element.style.bottom = "0px";
+  }, 100);
+  
+  setTimeout(() => {
+    close();
+  }, 5000)
+}
+
 exports.openUpdates = () => {
   //creates new modal with latest updates
   const updateModal = modalSystem.createModal(`
-    <h2>Updates | v${app.getVersion()} (October 29, 2020)</h2>
+    <h2>Updates | v${app.getVersion()} (February 7, 2021)</h2>
     <hr />
     <ul>
-      <li>Fixed disabled typing for search bar</li>
+      <li>Fixed modals not scrolling</li>
+      <li>Created left panel</li>
+      <li>Added search history</li>
+      <li>Added reload shortcut</li>
+      <li>Added notifications</li>
+      <li>Fixed links opening in a new tab</li>
+      <li>Added a context menu for tabs</li>
+      <li><b>Added webview events (finally)</b></li>
+      <li><b>Added a crappy bookmarking system</b></li>
+      <li><b>Added open in new tab</b></li>
     </ul>
     <h2>Future Updates</h2>
     <hr />
     <ul>
-      <li>Open in new tab</li>
-      <li>Add a description for each keyboard shortcut</li>
-      <li style="font-weight: bold">Working feedback system</li>
-      <li style="font-weight: bold">Create the left panel</li>
+      <li>Fix the crappy bookmarking system</li>
     </ul>
   `)
 }

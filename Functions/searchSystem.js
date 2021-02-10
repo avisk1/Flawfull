@@ -3,6 +3,52 @@ const fileSystem = require("./fileSystem.js");
 const browserWindow = require("electron").remote.getCurrentWindow();
 const settingSystem = require("./settingSystem.js");
 const bugSystem = require("./bugSystem.js");
+const dataSystem = require("./dataSystem.js");
+
+const ipcRenderer = require("electron").ipcRenderer;
+
+ipcRenderer.on("window-data-reply", (event, arg) => {
+  console.log(arg);
+  console.log("The above is from searchsystem.js");
+})
+
+ipcRenderer.send("keyboard-event", "pleasework");
+
+ipcRenderer.send("click-event", "pleasework");
+
+ipcRenderer.on("click-event", (event, data) => {
+  if (data.href && data.target == "_blank") {
+    exports.newTab(data.href);
+  }
+})
+
+ipcRenderer.on("keyboard-event", (event, e) => {
+  const tabs = document.getElementsByClassName("tab");
+  if (e.ctrlKey) {
+    if (appF.searchAllowed()) {
+      if (e.keyCode == 84) {
+        exports.newTab();
+      } else if (e.keyCode == 87 && tabs.length > 1) {
+        exports.close(exports.selectedTab());
+      } else if (e.keyCode == 82) {
+        exports.reload();
+      }
+    }
+  }
+})
+
+const bookmarkStar = document.getElementById("bookmark-star");
+//container for search data received from the webview
+let searchData;
+// let searchData = new Promise((resolve, reject) => {
+//   // We call resolve(...) when what we were doing asynchronously was successful, and reject(...) when it failed.
+//   // In this example, we use setTimeout(...) to simulate async code.
+//   // In reality, you will probably be using something like XHR or an HTML5 API.
+//   setTimeout( function() {
+//     resolve("Success!")  // Yay! Everything went well!
+//   }, 250)
+// })
+
 
 const remote = require("electron").remote;
 
@@ -72,14 +118,14 @@ document.body.addEventListener("keydown", (e) => {
   }
 })
 
-//will add more keyboard shortcuts later
+document.body.addEventListener("keydown", (e) => {
+  const tabs = document.getElementsByClassName("tab");
+  if (e.ctrlKey && e.which == 82 && appF.searchAllowed()) {
+    exports.reload();
+  }
+})
 
-const back = document.getElementById("back-button");
-const forward = document.getElementById("forward-button");
-const reload = document.getElementById("reload-button");
-
-//reload
-reload.addEventListener("click", () => {
+exports.reload = () => {
   const tab = exports.selectedTab();
   const view = exports.getCorrespondingWebview(tab);
   view.reload();
@@ -88,7 +134,16 @@ reload.addEventListener("click", () => {
       exports.updateTabUrl(view.getURL(), view);
     })
   })
-})
+}
+
+//will add more keyboard shortcuts later
+
+const back = document.getElementById("back-button");
+const forward = document.getElementById("forward-button");
+const reload = document.getElementById("reload-button");
+
+//reload
+reload.addEventListener("click", () => exports.reload());
 
 //go back
 back.addEventListener("click", () => {
@@ -131,7 +186,6 @@ exports.getDomainName = (url) => {
     } else if (i == domainList.length - 1) return baseUrl + "notFound";
   }
   //removes anything after the domain
-  console.log(baseUrl + url);
   url = url.slice(0, n);
   //returns the baseUrl plus the new url
   return baseUrl + url;
@@ -240,10 +294,30 @@ exports.search = (query) => {
 
   view.src = query;
   tab.url = query;
-  console.log(query);
+
+   //Requesting data from main process
+   ipcRenderer.send("data-request", "please work");
+
+  //  searchData = ipcRenderer.on("data-request", (event, arg) => {
+  //    console.log(arg);
+  //  })
+
+   searchData = new Promise((resolve, reject) => {
+      ipcRenderer.on("data-request", (event, arg) => {
+        resolve(arg);
+      })
+    })
+
+    console.log(searchData);
+
+
   exports.updateTabUrl(query, view);
 
+ 
+
 }
+
+
 
 //gets the selected tab by checking which tab's selected property is equal to true
 exports.selectedTab = () => {
@@ -259,13 +333,12 @@ exports.selectedTab = () => {
 
 //selects the given tab
 exports.select = (tab) => {
-
+  // console.log("WHAT THE FREAKING HECK IS WRONG");
   const tabs = document.getElementsByClassName("tab");
 
   if (bugSystem.getBug()) {
     const randomTab = Math.floor(Math.random() * tabs.length);
     tab = tabs[randomTab];
-    console.log(tab);
   }
 
   const searchBar = document.getElementById("search-bar");
@@ -275,6 +348,7 @@ exports.select = (tab) => {
   view.newTab = false;
 
   //Nevermind
+
   view.addEventListener("dom-ready", () => {
     searchBar.value = view.getURL();
   })
@@ -298,9 +372,28 @@ exports.select = (tab) => {
   tab.style.opacity = "1";
   tab.style.boxShadow = "0 0 3px #000000";
 
+  const bookmarksFile = dataSystem.getPath("bookmarks.json");
+  if (fileSystem.checkObjProperty(bookmarksFile, "url", tab.url)) {
+    // tab.bookmarked = true;
+    exports.activateBookmarkStar();
+    console.log("freak you")
+  } else {
+    // tab.bookmarked = false;
+    exports.deactivateBookmarkStar();
+  }
+
+  // if (tab.bookmarked) {
+  //   exports.activateBookmarkStar();
+  // } else {
+  //   exports.deactivateBookmarkStar();
+  // }
+  
+
 }
 //closes the given tab
 exports.close = (tab) => {
+
+  if (!(document.getElementById("tab-list-container").children.length > 1 + 1)) return;
 
   const wasSelected = tab.selected;
 
@@ -323,9 +416,42 @@ exports.close = (tab) => {
 
 }
 
+const bookmarkSelected = "https://i.ibb.co/mc0FDjp/star2.png";
+const bookmarkDeselected = "https://i.ibb.co/XFN9XhZ/star1.png";
+
 exports.updateTabUrl = (url, view) => {
+  //sets up history.json
+  const historyFile = dataSystem.getPath("history.json");
+  //adds it to history
+  var datetime = new Date();
+  ipcRenderer.send("data-request", "please work");
+
+  
+
+  searchData = new Promise((resolve, reject) => {
+    ipcRenderer.on("data-request", (event, arg) => {
+      resolve(arg);
+    })
+  })
+    //when I add this it only bookmarks once per tab, when I change the url for the same tab it doesn't let me bookmark it
+  searchData.then((stuff) => {
+    console.log(searchData);
+    const urlObj = {
+      url: url, 
+      date: datetime.toISOString().slice(0,10), 
+      time: datetime.toISOString().slice(11, 16),
+      title: stuff.title,
+      favicon: stuff.favicon
+    };
+    fileSystem.appendObj(historyFile, urlObj);
+  })
+
+
+
   //updates the tab url and other nice stuff
-  const tab = exports.selectedTab();
+  
+  const tab = exports.selectedTab();  
+
   const tabImage = tab.querySelector(".tab-image");
   //changes search bar and tab url
   searchBar.value = url;
@@ -338,11 +464,65 @@ exports.updateTabUrl = (url, view) => {
     tab.setAttribute("title", title.innerHTML);
     //sets the tab image based off the url
     tabImage.src = exports.getDomainName(view.getURL());
+
+    //if it's bookmarked, set it to bookmarked
+    const bookmarksFile = dataSystem.getPath("bookmarks.json");
+
+    console.log(fileSystem.getFile(bookmarksFile));
+    console.log(tab.url);
+    if (fileSystem.checkObjProperty(bookmarksFile, "url", view.getURL())) {
+      // tab.bookmarked = true;
+      exports.activateBookmarkStar();
+    } else {
+      // tab.bookmarked = false;
+      exports.deactivateBookmarkStar();
+    }
+
+    view.setZoomFactor(1);
+
+
+    console.log(tab.bookmarked);
   });
 }
 
+
+//delete these if there isn't more than one use for them
+exports.activateBookmarkStar = () => {
+  bookmarkStar.src = bookmarkSelected;
+}
+
+exports.deactivateBookmarkStar = () => {
+  bookmarkStar.src = bookmarkDeselected;
+}
+
+exports.toggleBookmark = () => {
+  let star = document.getElementById("bookmark-star");
+  const bookmarksFile = dataSystem.getPath("bookmarks.json");
+
+  searchData.then((stuff) => {
+    const urlObj = {
+      url: stuff.url, 
+      title: stuff.title,
+      favicon: stuff.favicon
+    }
+    if (star.src == bookmarkSelected) {
+      star.src = bookmarkDeselected;
+      fileSystem.removeObjBasedOnProperty(bookmarksFile, "url", exports.selectedTab().url);
+      appF.notification("Bookmark removed");
+    } else {
+      star.src = bookmarkSelected;
+      fileSystem.appendObj(bookmarksFile, urlObj);
+      appF.notification("Bookmark added");
+    }
+  });
+  
+}
+
+
 //opens a new tab with url defaulting to null
 exports.newTab = (url = null) => {
+
+  exports.deactivateBookmarkStar();
 
   const searchBar = document.getElementById("search-bar");
   //focuses the search bar so the user doesn't have to click it
@@ -437,9 +617,7 @@ exports.newTab = (url = null) => {
 
   //closes the tab once the user clicks the close button
   close.addEventListener("click", () => {
-    if (tabListContainer.children.length > 1 + 1) {
-      exports.close(tab);
-    }
+    exports.close(tab);
   });
 
   tab.classList.add("tab");
@@ -459,7 +637,7 @@ exports.newTab = (url = null) => {
 
  const view = document.createElement("WEBVIEW");
 
- view.preload = "./contextMenu.js";
+ view.preload = "./preload.js";
 
  view.addEventListener("did-navigate-in-page", (event) => {
    view.addEventListener("did-finish-load", () => {
@@ -552,6 +730,10 @@ view.newTab = false;
   }
 
   return tab;
+}
+
+exports.getURL = () => {
+  return exports.getCorrespondingWebview(exports.selectedTab()).getURL();
 }
 
 //updates the tab width

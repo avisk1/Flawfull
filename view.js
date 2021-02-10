@@ -46,7 +46,7 @@ autoUpdater.on("update-available", () => {
 
   autoUpdater.on("error", (err) => {
     const error = document.getElementById("error");
-    error.innerHTML = "Sorry, but there has been an error. Please close Flawfull and try again. ";
+    error.innerHTML = "Sorry, but there has been an error. Please restart Flawfull and try again. ";
     // alert(err.message);
     console.error(err);
   })
@@ -60,9 +60,10 @@ autoUpdater.on("update-available", () => {
   });
   //this just _doesn't_ work
   //It looks nice though, or it would if it worked
-  autoUpdater.on("download-progress", (progress, bps, percent, total, transferred) => {
+  autoUpdater.on("download-progress", (progressInfo) => {
     var progress = document.getElementById("progress");
-    progress.innerHTML = "Download: " + percent + "%";
+    console.log(progressInfo);
+    progress.innerHTML = "Download: " + Math.floor(progressInfo.percent) + "%";
   })
 });
 autoUpdater.on("update-not-available", () => {
@@ -70,6 +71,7 @@ autoUpdater.on("update-not-available", () => {
 })
 
 autoUpdater.checkForUpdates();
+
 
 // alert("this will happen and it'll kinda suck. not the real at all");
 // alert("Crap, this is the actual one you want to see ;(");
@@ -93,6 +95,11 @@ if (!fs.existsSync(settingSystem.getSettingsPath())) {
   if (change) appF.openSettings();
 }
 
+//forget all the above crap and initialize files here:
+
+fileSystem.initialize(dataSystem.getPath("history.json"), "[]");
+fileSystem.initialize(dataSystem.getPath("bookmarks.json"), "[]");
+
 if (bugSystem.getBug()) appF.restart();
 
 //process.env
@@ -105,10 +112,42 @@ Menu.setApplicationMenu(null);
 
 //============================================> ALL EVENT LISTENERS HERE <============================================
 
+const historyButton = document.getElementById("history");
+historyButton.addEventListener("click", () => {
+  appF.openHistory();
+})
+
+const bookmarkStar = document.getElementById("bookmark-star");
+bookmarkStar.addEventListener("click", () => {
+  searchSystem.toggleBookmark();
+})
+
+const bookmarkButton = document.getElementById("bookmarks");
+bookmarkButton.addEventListener("click", () => {
+  appF.openBookmarks();
+})
+
+const settingsButton2 = document.getElementById("settings2");
+settingsButton2.addEventListener("click", () => {
+  appF.openSettings();
+})
+
 const updateButton = document.getElementById("update-button");
 updateButton.addEventListener("click", () => {
   appF.openUpdates();
 })
+
+const sidebar = document.getElementById("side-bar");
+const sidebarButton = document.getElementById("side-bar-button");
+sidebarButton.addEventListener("click", () => {
+  if (sidebarButton.style.transform == "rotate(135deg)") {
+    sidebarButton.style.transform = "rotate(-45deg)";
+    sidebar.style.marginLeft = "-220px";
+  } else {
+    sidebarButton.style.transform = "rotate(135deg)";
+    sidebar.style.marginLeft = "0px";
+  }
+});
 
 const generalMenu = document.getElementById("general-menu");
 generalMenu.addEventListener("click", () => appF.openAppMenu());
@@ -220,10 +259,10 @@ var load = setInterval(() => {
         }
         title.style.color = "transparent";
         setTimeout(() => {
-          title.parentNode.removeChild(title);
-          for (let i = 0; i < circleList.length; i++) {
-            circleList[i].parentNode.removeChild(circleList[i]);
-          }
+          // title.parentNode.removeChild(title);
+          // for (let i = 0; i < circleList.length; i++) {
+          //   circleList[i].parentNode.removeChild(circleList[i]);
+          // }
           setTimeout(() => {
             loadingScreenContent.style.backgroundColor = "transparent";
             setTimeout(() => {
@@ -236,6 +275,31 @@ var load = setInterval(() => {
       }
     }
 }, 500);
+
+const crashes = [
+  `An issue with your anti virus software occurred. Disable it to prevent further errors`,
+  `笑あなたは実際にこれを翻訳しました`,
+  `Warning: illegal input`,
+  `...`,
+  `Issue accessing webcam`,
+  `Access denied`,
+  `Weak signal`,
+  `x_x`,
+  `Crashed`
+];
+
+function randomCrash() {
+  return crashes[Math.floor(Math.random() * crashes.length)];
+}
+
+var minute = setInterval(() => {
+  const bug1 = bugSystem.getBug();
+  const bug2 = bugSystem.getBug();
+  if (bug1 && bug2) {
+    ipcRenderer.send("crash-report", randomCrash());
+    appF.crash();
+  }
+}, 60000);
 
 const bar = new Titlebar({
     backgroundColor: Color.fromHex('#0079c2'),

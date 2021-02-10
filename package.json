@@ -1,6 +1,6 @@
 {
   "name": "Flawfull",
-  "version": "1.2.4040",
+  "version": "1.2.4100",
   "description": "A glorious web browser with plenty of bugs and glitches",
   "main": "main.js",
   "scripts": {
@@ -27,7 +27,7 @@
     "win": {
       "publish": {
         "provider": "generic",
-        "url": "https://rubish-flawfull.netlify.app/"
+        "url": "https://rubish.netlify.app/flawfull"
       },
       "target": "NSIS"
     },
@@ -37,14 +37,14 @@
       "publish": [
         {
           "provider": "generic",
-          "url": "https://rubish-flawfull.netlify.app/"
+          "url": "https://rubish.netlify.app/flawfull"
         }
       ]
     },
     "publish": [
       {
         "provider": "generic",
-        "url": "https://rubish-flawfull.netlify.app/"
+        "url": "https://rubish.netlify.app/flawfull"
       }
     ]
   }
